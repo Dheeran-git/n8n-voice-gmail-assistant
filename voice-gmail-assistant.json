@@ -1,0 +1,764 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ec1dd99b-34f5-4398-a546-e5ba5e34374f",
+      "name": "Telegram Trigger",
+      "webhookId": "3ba9bc0c-56b5-4629-bc6b-218fd36c741b",
+      "credentials": {
+        "telegramApi": {
+          "id": "xHh9ynddqcGieEeP",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.voice.file_id }}",
+                    "rightValue": "=",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "0c9ff217-ca32-404e-a5fa-6d35f4dcb31d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2d14c51c-87f4-488b-b61a-5da85c6b062d",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e44b24a2-44df-47b4-b73c-7f5181a8b198",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram Trigger').first().json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        -240
+      ],
+      "id": "644f8640-9645-49ff-864e-883414c9797a",
+      "name": "Download Audio File from Telegram",
+      "webhookId": "6e41131d-96f8-4ef2-baed-bf106cb15f18",
+      "credentials": {
+        "telegramApi": {
+          "id": "xHh9ynddqcGieEeP",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Today's Date: {{ $now.format('fff') }}\n\nUser's Input: {{ $json.my_prompt }}",
+        "options": {
+          "systemMessage": "You are a smart assistant that helps users manage their Gmail using natural language. Interpret the user's message carefully and decide whether the task is related to email or calendar.\n\nThen route the query to the appropriate tool:\n\n- Use the Gmail tools if the query is about emails, such as reading, replying, labeling, or drafting.\n\nMake sure to pass the entire user query exactly as they said it to the selected tool—no trimming or summarizing. Do not answer directly—always delegate to the relevant tool for processing.\n\nIf the query isn't clear or doesn't seem related to email or calendar, gently ask the user for more details.\n\nAnd one last thing—keep the tone friendly and conversational, like you're chatting with a real person. Be kind, helpful, and a little playful if it feels right. You're here to make their day easier, so feel free to add a bit of charm while getting things done."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        16
+      ],
+      "id": "3ac333a9-d3f5-4eb7-866f-9fccf7e4eedf",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        688,
+        224
+      ],
+      "id": "671cfee1-c614-4a04-8e0f-475c248a0316",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "f0r3lohVLHty5WA6",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').first().json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        224
+      ],
+      "id": "d4cd17f7-e314-4ece-ab12-2a3099817b06",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        624,
+        -240
+      ],
+      "id": "e8abecef-c2f3-490b-aa77-10e1fbbe5778",
+      "name": "Transcribe Audio File Using Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "f0r3lohVLHty5WA6",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Limit', ``, 'number') }}",
+        "filters": {
+          "labelIds": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Label_Names_or_IDs', ``, 'string') }}",
+          "q": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Search', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        992,
+        240
+      ],
+      "id": "30dc23a2-d6bf-42fa-9f26-420ab0b06474",
+      "name": "Read Emails",
+      "webhookId": "696da753-1ae3-410f-bb9e-4194f4e99bd7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cHKKMPWEA0lCNefv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message_ID', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        240
+      ],
+      "id": "3ed257ca-6b08-4eb8-8925-0aa7bbb9e42c",
+      "name": "Get the details of an Email",
+      "webhookId": "25115f76-a81a-4e39-8057-68ebf523f1d9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cHKKMPWEA0lCNefv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message_ID', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1264,
+        240
+      ],
+      "id": "74bb88d0-89f8-43a7-848a-10c66912d731",
+      "name": "Delete Emails",
+      "webhookId": "c54cac18-ff8f-4470-aa4e-fb9cc5726de4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cHKKMPWEA0lCNefv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1392,
+        240
+      ],
+      "id": "649a1d84-d2d5-4255-88ec-88f52cab737a",
+      "name": "Send Email",
+      "webhookId": "42b8e0ea-a2e5-4bd9-9426-8c67836e12fb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cHKKMPWEA0lCNefv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message_ID', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1344,
+        384
+      ],
+      "id": "eb866262-9fca-4619-9641-ea9ff0c33d97",
+      "name": "Reply to Emails",
+      "webhookId": "5881a659-4266-4f47-a050-ab1cef4e071d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cHKKMPWEA0lCNefv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "operation": "get",
+        "labelId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Label_ID', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        384
+      ],
+      "id": "8a561746-fda7-4703-847f-a5c08663305f",
+      "name": "Get Label",
+      "webhookId": "53a0de24-80b7-4b8f-b208-f908f4d186b6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cHKKMPWEA0lCNefv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "removeLabels",
+        "messageId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message_ID', ``, 'string') }}",
+        "labelIds": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Label_Names_or_IDs', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        384
+      ],
+      "id": "87059ff3-924f-4b98-8af1-7d697c096b74",
+      "name": "Remove Label",
+      "webhookId": "f41190ed-e5a1-45db-ab72-0d5a6ebf4691",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cHKKMPWEA0lCNefv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "html",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To_Email', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1504,
+        240
+      ],
+      "id": "a7eda1b1-6a25-467f-9dfc-e6d694c132c8",
+      "name": "Draft Email",
+      "webhookId": "6fb744a0-4355-4d41-b0db-acbf2836d05c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cHKKMPWEA0lCNefv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2e3470fe-3754-43a3-beb0-2f6a47f4f318",
+              "leftValue": "={{ $('Telegram Trigger').first().json.message.voice.file_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        16
+      ],
+      "id": "1de8cf0e-d85c-4973-ab3c-ff08165fff08",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User's Input: {{ $json.output }}",
+        "options": {
+          "systemMessage": "You are an AI assistant and your role is to present the information in summarized way and share only the relevant information."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1648,
+        -112
+      ],
+      "id": "66a82d17-1d15-43d0-a0af-7de91d44739e",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        128
+      ],
+      "id": "95b93aba-ffdd-40b8-9436-23d8414de417",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "f0r3lohVLHty5WA6",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2064,
+        32
+      ],
+      "id": "7dcee651-55c4-44fd-ab9d-061570691583",
+      "name": "Send a text message",
+      "webhookId": "45245f85-15e7-485e-b84f-27b5dc8bc211",
+      "credentials": {
+        "telegramApi": {
+          "id": "xHh9ynddqcGieEeP",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6f530ab0-aa3a-4b34-a19f-1d267f2d76a6",
+              "name": "my_prompt",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        16
+      ],
+      "id": "900e14c2-e891-4d5d-a303-a15f73ceed15",
+      "name": "Set Text Input"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "998e4ee1-9ac5-4f52-a3bd-376ae91e4509",
+              "name": "my_prompt",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        -240
+      ],
+      "id": "cfaa782e-0378-4daa-a515-f5e06b6c378a",
+      "name": "Set Voice Input"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Download Audio File from Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Text Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Audio File from Telegram": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio File Using Google Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio File Using Google Gemini": {
+      "main": [
+        [
+          {
+            "node": "Set Voice Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the details of an Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Label": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Label": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Text Input": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Voice Input": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "36187fec-54b5-4a19-8d30-1818d91e19c7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8efa7f397d36a2c9cb94f5abc1f32e04d7b8b36d3fd00c2947420334f2530773"
+  },
+  "id": "nNspwLKZeKeVOkZa",
+  "tags": []
+}
