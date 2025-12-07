@@ -62,4 +62,4 @@ As this is a side project, potential improvements include:
 4.  Activate the workflow and start talking or texting!
 
 ---
-*Built with ❤️ by a lazy/ambitious engineering student.*
+*Built with ❤️ by a ambitious engineering student.*
